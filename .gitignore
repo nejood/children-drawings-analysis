@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+.venv/
+env/
+.env/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# PyTorch/ML Models
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Large Data Files and Datasets
+data/
+outputs/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+*.tiff
+*.json
+*.csv
+*.txt
+
+# Allow specific configuration files
+!requirements.txt
+!deps.txt
+!README.md
+!.gitignore
+!Commands to run.txt
+
+# Logs
+*.log
+logs/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Model checkpoints and large files
+checkpoint-*/
+wandb/

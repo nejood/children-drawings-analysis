@@ -1,0 +1,109 @@
+# Enhance each emotions source
+python scripts/enhance_images.py \
+  --in data/raw/emotions \
+  --out data/raw/emotions_enh \
+  --autocontrast --median 3 --sharpen 0.8 --gamma 0.95 --resize 224
+
+python scripts/enhance_images.py \
+  --in data/raw/Emotion_Recognition_multiclass \
+  --out data/raw/Emotion_Recognition_multiclass_enh \
+  --autocontrast --median 3 --sharpen 0.8 --gamma 0.95 --resize 224
+
+# Combine the enhanced folders (pass as args so we only use _enh sources)
+python scripts/combine_emotions.py \
+  "data/raw/emotions_enh" \
+  "data/raw/Emotion_Recognition_multiclass_enh"
+
+# -------------------------------------------------------
+
+# Example: enhance three YOLO-style datasets (adjust to what you have)
+python scripts/enhance_yolo_dataset.py \
+  --in data/raw/HTP2_multiclass \
+  --out data/raw/HTP2_multiclass_enh \
+  --autocontrast --median 3 --sharpen 0.8 --gamma 1.0 --resize 640
+
+python scripts/enhance_yolo_dataset.py \
+  --in data/raw/htp_test_multiclass \
+  --out data/raw/htp_test_multiclass_enh \
+  --autocontrast --median 3 --sharpen 0.8 --gamma 1.0 --resize 640
+
+python scripts/enhance_yolo_dataset.py \
+  --in data/raw/DAP \
+  --out data/raw/DAP_enh \
+  --autocontrast --median 3 --sharpen 0.8 --gamma 1.0 --resize 640
+
+# Rebuild the unified set using ONLY the enhanced sources
+python scripts/build_htp_dap_combined_flexible.py \
+  --sources data/raw/HTP2_multiclass_enh data/raw/htp_test_multiclass_enh data/raw/DAP_enh
+# -------------------------------------------------------
+
+# Emotions
+python scripts/clean_normalize.py \
+  --mode emotions \
+  --in data/processed/emotions_combined \
+  --out data/processed/emotions_clean \
+  --resize 224 --dedup
+
+# Detection
+python scripts/clean_normalize.py \
+  --mode detection \
+  --in data/processed/htp_dap_combined \
+  --out data/processed/htp_dap_clean \
+  --resize 640 \
+  --min_box_area 0.0 \
+  --dedup
+
+# -------------------------------------------------------
+
+# Activate virtual environment first: source .venv/bin/activate
+python scripts/train_emotions_vit_hf.py \
+  --data_root data/processed/emotions_clean \
+  --model_id google/vit-base-patch16-224-in21k \
+  --epochs 50 \
+  --batch_size 32 \
+  --lr 3e-5 \
+  --img_size 224 \
+  --lora
+# -------------------------------------------------------
+
+python scripts/split_and_convert_yolo_to_coco.py \
+  --root data/processed/htp_dap_clean \
+  --val_ratio 0.15
+
+# -------------------------------------------------------
+
+python scripts/train_detection_detr_hf.py \
+  --coco_root data/processed/htp_dap_clean_coco \
+  --model_id facebook/detr-resnet-10 \
+  --epochs 50 \
+  --batch_size 14 \
+  --lr 2e-5
+
+# -------------------------------------------------------
+
+python scripts/caption_blip2_infer_hf.py \
+  --images_dir data/processed/htp_dap_clean/images \
+  --out_csv data/processed/htp_dap_clean/captions.csv \
+  --model_id Salesforce/blip2-opt-2.7b \
+  --max_new_tokens 40 \
+  --prompt "Describe the drawing briefly."
+
+# -------------------------------------------------------
+
+python scripts/infer_and_report.py \
+  --images_dir data/processed/htp_dap_clean/images \
+  --out_dir outputs \
+  --emotions_model_dir data/processed/emotions_clean/models/<your_vit_dir> \
+  --detr_model_dir data/processed/htp_dap_clean_coco/models/<your_detr_dir> \
+  --blip2_model_id Salesforce/blip2-opt-2.7b \
+  --det_conf 0.25 \
+  --max_new_tokens 40 \
+  --prompt "Describe the emotions, environment, and objects in this drawing."
+
+# -------------------------------------------------------
+
+python scripts/interpret_and_report.py \
+  --images_dir data/processed/htp_dap_clean/images \
+  --json_dir outputs/json \
+  --pdf_out outputs/pdf_interpreted
+
